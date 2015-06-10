@@ -903,41 +903,60 @@ func main() {
 		fmt.Printf("Error: %v\n", bb.TallyError(testtarget))
 
 		if testtarget.NCats() != 0 {
-			falsesbypred := make([]int, testtarget.NCats())
-			predtotals := make([]int, testtarget.NCats())
+			// this section has been completely changed from upstream.
+			// variable names are not the same anymore, I'm using terms that are more clear to me specifically.
+			// outputs in the end assume boolean categories, which is of course not correct for the general case.
+			// this means they are not meant to be merged back through a PR
+			mistakes := make([]int, testtarget.NCats())
+			total := make([]int, testtarget.NCats())
 
-			truebytrue := make([]int, testtarget.NCats())
-			truetotals := make([]int, testtarget.NCats())
+			gotitright := make([]int, testtarget.NCats())
+			shouldbe := make([]int, testtarget.NCats())
 
 			correct := 0
 			nas := 0
 			length := testtarget.Length()
 			for i := 0; i < length; i++ {
 				truei := testtarget.(*CloudForest.DenseCatFeature).Geti(i)
-				truetotals[truei]++
+				shouldbe[truei]++
 				pred := bb.Tally(i)
 				if pred == "NA" {
+					fmt.Println("na")
 					nas++
 				} else {
 					predi := testtarget.(*CloudForest.DenseCatFeature).CatToNum(pred)
-					predtotals[predi]++
+					total[predi]++
 					if pred == testtarget.GetStr(i) {
 						correct++
-						truebytrue[truei]++
+						gotitright[truei]++
 					} else {
-
-						falsesbypred[predi]++
+						mistakes[predi]++
 					}
 				}
-
 			}
-			fmt.Printf("Classified: %v / %v = %v\n", correct, length, float64(correct)/float64(length))
-			for i, v := range testtarget.(*CloudForest.DenseCatFeature).Back {
-				fmt.Printf("Label %v Percision (Actuall/Predicted): %v / %v = %v\n", v, falsesbypred[i], predtotals[i], float64(falsesbypred[i])/float64(predtotals[i]))
-				falses := truetotals[i] - truebytrue[i]
-				fmt.Printf("Label %v Missed/Actuall Rate: %v / %v = %v\n", v, falses, truetotals[i], float64(falses)/float64(truetotals[i]))
 
-			}
+			fmt.Printf("Accuracy: %v / %v = %v\n", correct, length, float64(correct)/float64(length))
+
+			truenegative := gotitright[0]
+			shouldbenegative := shouldbe[0]
+			truenegativeratio := float64(truenegative) / float64(shouldbenegative)
+			fmt.Printf("True Negatives %d / Total Negatives %d = Specificity (True Negative Rate) %f\n", truenegative, shouldbenegative, truenegativeratio)
+
+			truepositive := gotitright[1]
+			shouldbepositive := shouldbe[1]
+			truepositiveratio := float64(truepositive) / float64(shouldbepositive)
+			fmt.Printf("True Positives %d / Total Positives %d = Sensitivity (True Positive Rate) %f\n", truepositive, shouldbepositive, truepositiveratio)
+
+			falsepositives := mistakes[1]
+			predictedpositive := truepositive + falsepositives
+			fmt.Printf("True Positives %d / Predicted Positives %d = Precision (Positive Predictive Value) %f\n", truepositive, predictedpositive,
+				float64(truepositive)/float64(predictedpositive))
+
+			falsenegatives := mistakes[0]
+			predictednegatives := truenegative + falsenegatives
+			fmt.Printf("True Negatives %d / Predicted Negatives %d = Negative Predictive Value %f\n", truenegative, predictednegatives,
+				float64(truenegative)/float64(predictednegatives))
+
 			if nas != 0 {
 				fmt.Printf("Couldn't predict %v cases due to missing values.\n", nas)
 			}
