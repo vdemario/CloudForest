@@ -940,22 +940,27 @@ func main() {
 			truenegative := gotitright[0]
 			shouldbenegative := shouldbe[0]
 			truenegativeratio := float64(truenegative) / float64(shouldbenegative)
-			fmt.Printf("True Negatives %d / Total Negatives %d = Specificity (True Negative Rate) %f\n", truenegative, shouldbenegative, truenegativeratio)
+			specifity := truenegativeratio // useless, only so we can have multiple names for the same variable
+			fmt.Printf("True Negatives %d / Total Negatives %d = Specificity (True Negative Rate) %f\n", truenegative, shouldbenegative, specifity)
 
 			truepositive := gotitright[1]
 			shouldbepositive := shouldbe[1]
 			truepositiveratio := float64(truepositive) / float64(shouldbepositive)
-			fmt.Printf("True Positives %d / Total Positives %d = Sensitivity (True Positive Rate) %f\n", truepositive, shouldbepositive, truepositiveratio)
+			recall := truepositiveratio
+			sensitivity := recall
+			fmt.Printf("True Positives %d / Total Positives %d = Sensitivity (True Positive Rate) %f\n", truepositive, shouldbepositive, sensitivity)
 
 			falsepositives := mistakes[1]
 			predictedpositive := truepositive + falsepositives
-			fmt.Printf("True Positives %d / Predicted Positives %d = Precision (Positive Predictive Value) %f\n", truepositive, predictedpositive,
-				float64(truepositive)/float64(predictedpositive))
+			precision := float64(truepositive) / float64(predictedpositive)
+			fmt.Printf("True Positives %d / Predicted Positives %d = Precision (Positive Predictive Value) %f\n", truepositive, predictedpositive, precision)
 
 			falsenegatives := mistakes[0]
 			predictednegatives := truenegative + falsenegatives
 			fmt.Printf("True Negatives %d / Predicted Negatives %d = Negative Predictive Value %f\n", truenegative, predictednegatives,
 				float64(truenegative)/float64(predictednegatives))
+
+			fmt.Printf("F1 Score: %f\n", 2.0*precision*recall/(precision+recall))
 
 			if nas != 0 {
 				fmt.Printf("Couldn't predict %v cases due to missing values.\n", nas)
